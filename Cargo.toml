@@ -4,6 +4,7 @@ members = ["client", "server"]
 [workspace.dependencies]
 crossterm = "0.28.1"
 ratatui = "0.29.0"
+tokio = "1.42.0"
 
 [package]
 name = "chat-ratatui"
