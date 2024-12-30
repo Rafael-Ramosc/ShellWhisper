@@ -1,0 +1,15 @@
+[workspace]
+members = ["client", "server"]
+
+[workspace.dependencies]
+crossterm = "0.28.1"
+ratatui = "0.29.0"
+
+[package]
+name = "chat-ratatui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+client = { path = "./client" }
+server = { path = "./server" }
