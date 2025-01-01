@@ -1,15 +1,18 @@
 use std::sync::Arc;
 use crate::server_state::State;
+use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
 
 pub async fn handle_connection(
-    socket: tokio::net::TcpStream, 
+    mut socket: tokio::net::TcpStream, 
     state: Arc<State>,
     id: u32
-) {
+) -> Result<std::net::SocketAddr> {
+
+    let addr = socket.peer_addr().unwrap();
 
     if !state.can_accept_connection().await {
         println!("Max connections reached"); //TODO: send message to client, maybe create a error kind for server
-        return;
+        return Ok(addr);
     }
 
     if let Ok(addr) = socket.peer_addr() {
@@ -17,10 +20,33 @@ pub async fn handle_connection(
         
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
+        let client_total = conn_map.len();
    
-        println!("Active connections: {:?}", *conn_map);
+        println!("Active connections ({client_total}): {:?}", *conn_map);
     }
-}
 
-//TODO: criar um função que detecta se a coneção foi fechada pelo cliente e remove o id da lista de conexões ativas
-// estudar: stream.read, stream.peek (TcpStream)
+    let mut buffer = [0; 1024];
+    
+
+    loop {
+        // println!("{:?} is reading...", &buffer[..n]);
+        match socket.read(&mut buffer).await {
+            Ok(0) => {
+                let mut conn_map = state.connection_list.lock().await;
+                conn_map.remove(&id);
+                break;
+            }
+            Ok(n) => {
+                println!("{} bytes read", n);
+                socket.write_all(&buffer[..n]).await?;
+            }
+            Err(e) => {
+                println!("Error reading data: {:?}", e);
+                break;
+            }
+        }
+    }
+
+    Ok(addr)
+
+}
