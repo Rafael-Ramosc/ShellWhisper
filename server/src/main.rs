@@ -1,11 +1,10 @@
 mod server_state;
+mod handles;
 
 use tokio::net::TcpListener;
-use std::collections::HashMap;
-use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use server_state::State;
+use handles::handle_connection;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -35,17 +34,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn handle_connection(
-    socket: tokio::net::TcpStream, 
-    connections: Arc<Mutex<HashMap<i32, SocketAddr>>>,
-    id: i32
-) {
-    if let Ok(addr) = socket.peer_addr() {
-        println!("{} connection succeed", &addr);
-        
-        let mut conn_map = connections.lock().await;
-        conn_map.insert(id, addr);
-   
-        println!("Active connections: {:?}", *conn_map);
-    }
-}
