@@ -1,8 +1,11 @@
+mod server_state;
+
 use tokio::net::TcpListener;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex; 
+use tokio::sync::Mutex;
+use server_state::State;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,21 +13,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Server adress: {}", &server_adress);
     let listener = TcpListener::bind(server_adress).await?;
 
-    let connections = Arc::new(Mutex::new(HashMap::new())); 
-    let mut id_counter = 0;
+    let state = Arc::new(State::new());
 
     // accept connections
     loop {
         let (socket, addr) = listener.accept().await?;
         println!("{} is connecting...", addr);
 
-        let connections = connections.clone();
-        let id = id_counter;
-        id_counter += 1;
-
+        let state = state.clone();
+       
         // new task
         tokio::spawn(async move {
-            handle_connection(socket, connections, id).await;
+            let id = {
+                let mut counter = state.id_counter.lock().await;
+                let id = *counter;
+                *counter += 1;
+                id
+            };
+            handle_connection(socket, state.connecting.clone(), id).await;
         });
     }
 }
