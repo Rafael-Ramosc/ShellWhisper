@@ -8,7 +8,7 @@ pub async fn handle_connection(
 ) {
 
     if !state.can_accept_connection().await {
-        println!("Max connections reached");
+        println!("Max connections reached"); //TODO: send message to client, maybe create a error kind for server
         return;
     }
 
@@ -21,3 +21,6 @@ pub async fn handle_connection(
         println!("Active connections: {:?}", *conn_map);
     }
 }
+
+//TODO: criar um função que detecta se a coneção foi fechada pelo cliente e remove o id da lista de conexões ativas
+// estudar: stream.read, stream.peek (TcpStream)

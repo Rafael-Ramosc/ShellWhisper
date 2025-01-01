@@ -5,7 +5,7 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 pub struct State {
     pub connection_list: Arc<Mutex<HashMap<u32, SocketAddr>>>,
     pub id_counter: Arc<Mutex<u32>>,
-    max_connections: usize,
+    max_connections: usize, 
 }
 
 impl State {
@@ -13,7 +13,7 @@ impl State {
         State {
             connection_list: Arc::new(Mutex::new(HashMap::new())),
             id_counter: Arc::new(Mutex::new(0)),
-            max_connections: 30,
+            max_connections: 30, //TODO: receber esse id da interface na hora de criar o servidor
         }
     }
 
