@@ -1,15 +1,21 @@
-use tokio::sync::Mutex;
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::sync::Arc;
+use crate::server_state::State;
 
 pub async fn handle_connection(
     socket: tokio::net::TcpStream, 
-    connections: Arc<Mutex<HashMap<i32, SocketAddr>>>,
-    id: i32
+    state: Arc<State>,
+    id: u32
 ) {
+
+    if !state.can_accept_connection().await {
+        println!("Max connections reached");
+        return;
+    }
+
     if let Ok(addr) = socket.peer_addr() {
         println!("{} connection succeed", &addr);
         
-        let mut conn_map = connections.lock().await;
+        let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
    
         println!("Active connections: {:?}", *conn_map);
