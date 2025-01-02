@@ -1,6 +1,6 @@
 use std::sync::Arc;
-use crate::server_state::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
+use crate::server_state::State;
 use crate::server_error::ServerError;
 
 pub async fn handle_connection(

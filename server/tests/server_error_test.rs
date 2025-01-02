@@ -1,5 +1,4 @@
-use server::server_error::ServerError; 
-use server::server_error::ServerErrorKind;
+use server::server_error::{ServerError, ServerErrorKind};
 
 #[test]
 fn test_error_creation() {

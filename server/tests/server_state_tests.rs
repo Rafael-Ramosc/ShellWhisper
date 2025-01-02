@@ -1,6 +1,5 @@
 use server::server_state::State;
-use std::net::SocketAddr;
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 
 #[tokio::test]
 async fn test_new_state() {
