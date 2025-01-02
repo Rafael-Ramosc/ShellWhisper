@@ -5,21 +5,21 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 pub struct State {
     pub connection_list: Arc<Mutex<HashMap<u32, SocketAddr>>>,
     pub id_counter: Arc<Mutex<u32>>,
-    max_connections: usize, 
+    max_connections: u32, 
 }
 
 impl State {
-    pub fn new() -> Self {
+    pub fn new(server_limit_connection: u32) -> Self {
         State {
             connection_list: Arc::new(Mutex::new(HashMap::new())),
             id_counter: Arc::new(Mutex::new(0)),
-            max_connections: 30, //TODO: receber esse id da interface na hora de criar o servidor
+            max_connections: server_limit_connection, //TODO: receber esse id da interface na hora de criar o servidor
         }
     }
 
     pub async fn can_accept_connection(&self) -> bool {
         let connections = self.connection_list.lock().await;
-        connections.len() < self.max_connections
+        connections.len() < self.max_connections as usize
     }
 
     pub async fn id_increment(&self) -> u32 {

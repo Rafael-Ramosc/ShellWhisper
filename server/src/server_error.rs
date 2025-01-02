@@ -9,7 +9,7 @@ pub struct ServerError {
 }
 
 impl ServerError {
-    fn new(kind: ServerErrorKind, message: String, code: u16) -> Self {
+    pub fn new(kind: ServerErrorKind, message: String, code: u16) -> Self {
         ServerError {
             kind,
             message,

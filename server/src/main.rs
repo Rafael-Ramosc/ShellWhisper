@@ -1,7 +1,8 @@
 mod server_state;
 mod handles;
+mod server_error;
 
-use tokio::{net::TcpListener};
+use tokio::net::TcpListener;
 use std::sync::Arc;
 use server_state::State;
 use handles::handle_connection;
@@ -13,7 +14,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Server adress: {}", &server_adress);
     let listener = TcpListener::bind(server_adress).await?; 
 
-    let state = Arc::new(State::new());
+    let server_limit_connections: u32 = 30;
+    let state = Arc::new(State::new(server_limit_connections));
 
     // accept connections
     loop {
