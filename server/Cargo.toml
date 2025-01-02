@@ -3,5 +3,16 @@ name = "server"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "server"
+path = "src/lib.rs"
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+tokio = { version = "1.0", features = ["full", "test-util"] }
