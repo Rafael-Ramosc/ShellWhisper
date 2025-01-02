@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use crate::server_state::State;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
+use crate::server_error::ServerError;
 
 pub async fn handle_connection(
     mut socket: tokio::net::TcpStream, 
@@ -11,7 +12,8 @@ pub async fn handle_connection(
     let addr = socket.peer_addr().unwrap();
 
     if !state.can_accept_connection().await {
-        println!("Max connections reached"); //TODO: send message to client, maybe create a error kind for server
+        let error = ServerError::max_connections_reached();
+        println!("{} connection failed: {}", addr, error);
         return Ok(addr);
     }
 
@@ -29,7 +31,6 @@ pub async fn handle_connection(
     
 
     loop {
-        // println!("{:?} is reading...", &buffer[..n]);
         match socket.read(&mut buffer).await {
             Ok(0) => {
                 let mut conn_map = state.connection_list.lock().await;
@@ -37,7 +38,8 @@ pub async fn handle_connection(
                 break;
             }
             Ok(n) => {
-                println!("{} bytes read", n);
+                let text = String::from_utf8_lossy(&buffer[..n]);
+                println!("{}: {}", addr, text);
                 socket.write_all(&buffer[..n]).await?;
             }
             Err(e) => {
