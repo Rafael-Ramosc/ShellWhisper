@@ -13,7 +13,7 @@ impl State {
         State {
             connection_list: Arc::new(Mutex::new(HashMap::new())),
             id_counter: Arc::new(Mutex::new(0)),
-            max_connections: server_limit_connection, //TODO: receber esse id da interface na hora de criar o servidor
+            max_connections: server_limit_connection,
         }
     }
 

@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // accept connections
     loop {
-        let (mut socket, addr) = listener.accept().await?; //TODO: handle error kind
+        let (socket, addr) = listener.accept().await?; //TODO: handle error kind
         println!("{} is connecting...", addr);
 
         let state = state.clone();
