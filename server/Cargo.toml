@@ -12,7 +12,7 @@ name = "server"
 path = "src/main.rs"
 
 [dependencies]
-sqlx = "0.8.3"
+sqlx = { version = "0.8.3", features = [ "runtime-tokio", "tls-rustls", "postgres", "macros" ] }
 tokio = { version = "1.0", features = ["full"] }
 
 [dev-dependencies]
