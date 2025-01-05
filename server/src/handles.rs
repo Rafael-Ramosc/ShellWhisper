@@ -25,6 +25,9 @@ pub async fn handle_connection(
         let client_total = conn_map.len();
    
         println!("Active connections ({client_total}): {:?}", *conn_map);
+
+        let welcome_message = "Connection establish!".as_bytes();
+        socket.write_all(welcome_message).await?;
     }
 
     let mut buffer = [0; 1024];
@@ -39,7 +42,7 @@ pub async fn handle_connection(
             }
             Ok(n) => {
                 let text = String::from_utf8_lossy(&buffer[..n]);
-                println!("{}: {}", addr, text);
+                print!("{}: {}", addr, text);
                 socket.write_all(&buffer[..n]).await?;
             }
             Err(e) => {
