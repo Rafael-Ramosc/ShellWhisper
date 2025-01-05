@@ -43,7 +43,6 @@ pub async fn handle_connection(
             Ok(n) => {
                 let text = String::from_utf8_lossy(&buffer[..n]);
                 print!("{}: {}", addr, text);
-                socket.write_all(&buffer[..n]).await?;
             }
             Err(e) => {
                 println!("Error reading data: {:?}", e);
