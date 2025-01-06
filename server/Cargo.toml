@@ -14,6 +14,7 @@ path = "src/main.rs"
 [dependencies]
 sqlx = { version = "0.8.3", features = [ "runtime-tokio", "tls-rustls", "postgres", "macros" ] }
 tokio = { version = "1.0", features = ["full"] }
+dotenv = "0.15.0"
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full", "test-util"] }
