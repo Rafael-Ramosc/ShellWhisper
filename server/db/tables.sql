@@ -2,13 +2,10 @@ CREATE SCHEMA IF NOT EXISTS chat;
 
 CREATE TABLE chat.user (
     id SERIAL PRIMARY KEY,
-    alias VARCHAR(50) NOT NULL UNIQUE,  
-    email VARCHAR(255) UNIQUE,         
-    password_hash TEXT NOT NULL,        
+    alias VARCHAR(50) NOT NULL UNIQUE,         
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     last_login_at TIMESTAMP WITH TIME ZONE,
-    status text DEFAULT 'offline' NOT NULL,  
-    is_active BOOLEAN DEFAULT false NOT NULL               
+    status text DEFAULT 'offline' NOT NULL,              
 );
 
 CREATE TABLE chat.user_ip (
@@ -28,12 +25,10 @@ CREATE TABLE chat.message (
     content TEXT NOT NULL,
     content_type VARCHAR(50) DEFAULT 'text' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    delivered_at TIMESTAMP WITH TIME ZONE,  
-    read_at TIMESTAMP WITH TIME ZONE,
-    deleted_at TIMESTAMP WITH TIME ZONE,
     status TEXT DEFAULT 'sent' NOT NULL, 
     is_encrypted BOOLEAN DEFAULT false NOT NULL  
 );
+
 
 
 CREATE INDEX idx_message_sender ON chat.message(sender_id);
