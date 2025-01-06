@@ -1,9 +1,21 @@
 use server::server_state::State;
 use std::{net::SocketAddr, sync::Arc};
+use dotenv::dotenv;
+use std::env;
+
+async fn setup_test_state(limit: u32) -> State {
+    dotenv().ok();
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    
+    State::new(limit, &database_url)
+        .await
+        .expect("Failed to create test state")
+}
 
 #[tokio::test]
 async fn test_new_state() {
-    let state = State::new(1);
+    let state = setup_test_state(1).await;
     
     assert!(state.can_accept_connection().await, "Should accept connections initially");
     
@@ -12,11 +24,14 @@ async fn test_new_state() {
     
     let counter = state.id_counter.lock().await;
     assert_eq!(*counter, 0, "Counter should start at zero");
+
+    // Test database connection
+    assert!(state.test_connection().await.is_ok(), "Database connection should be successful");
 }
 
 #[tokio::test]
 async fn test_can_accept_connection() {
-    let state = State::new(1);
+    let state = setup_test_state(1).await;
     
     assert!(state.can_accept_connection().await, "Should accept first connection");
     
@@ -31,7 +46,7 @@ async fn test_can_accept_connection() {
 
 #[tokio::test]
 async fn test_multiple_connections() {
-    let state = State::new(2); 
+    let state = setup_test_state(2).await;
     
     assert!(state.can_accept_connection().await, "Should accept first connection");
     
@@ -54,7 +69,7 @@ async fn test_multiple_connections() {
 
 #[tokio::test]
 async fn test_id_increment() {
-    let state = State::new(1);
+    let state = setup_test_state(1).await;
     
     assert_eq!(state.id_increment().await, 0, "First ID should be 0");
     assert_eq!(state.id_increment().await, 1, "Second ID should be 1");
@@ -63,7 +78,7 @@ async fn test_id_increment() {
 
 #[tokio::test]
 async fn test_concurrent_id_increment() {
-    let state = Arc::new(State::new(1));
+    let state = Arc::new(setup_test_state(1).await);
     let state_clone = state.clone();
 
     let handle1 = tokio::spawn(async move {
@@ -84,7 +99,7 @@ async fn test_concurrent_id_increment() {
 
 #[tokio::test]
 async fn test_connection_management() {
-    let state = State::new(1);
+    let state = setup_test_state(1).await;
     let addr1: SocketAddr = "127.0.0.1:8080".parse().unwrap();
     let addr2: SocketAddr = "127.0.0.1:8081".parse().unwrap();
 
@@ -111,4 +126,13 @@ async fn test_connection_management() {
         connections.insert(2, addr2);
         assert_eq!(connections.len(), 1, "Should have exactly one connection");
     }
+}
+
+#[tokio::test]
+async fn test_database_connection() {
+    let state = setup_test_state(1).await;
+    
+    // Test the database connection
+    let result = state.test_connection().await;
+    assert!(result.is_ok(), "Database connection test should succeed");
 }
