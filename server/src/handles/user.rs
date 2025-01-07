@@ -1,4 +1,4 @@
-use sqlx::types::{chrono::{DateTime, Utc}, IpAddr};
+use sqlx::types::chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use sqlx::PgPool;
 
