@@ -2,6 +2,7 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
 use crate::server_state::State;
 use crate::server_error::ServerError;
+use super::user::User;
 
 pub async fn handle_connection(
     mut socket: tokio::net::TcpStream, 
@@ -19,7 +20,11 @@ pub async fn handle_connection(
 
     if let Ok(addr) = socket.peer_addr() {
         println!("{} connection succeed", &addr);
-        
+
+        let user = User::new("user".to_string());
+        dbg!(&user);
+        user.create(&state.db_pool).await.expect("Failed to create user");
+
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
         let client_total = conn_map.len();
@@ -54,3 +59,5 @@ pub async fn handle_connection(
     Ok(addr)
 
 }
+
+

@@ -5,7 +5,7 @@ CREATE TABLE chat.user (
     alias VARCHAR(50) NOT NULL UNIQUE,         
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     last_login_at TIMESTAMP WITH TIME ZONE,
-    status text DEFAULT 'offline' NOT NULL,              
+    status text DEFAULT 'offline' NOT NULL              
 );
 
 CREATE TABLE chat.user_ip (
