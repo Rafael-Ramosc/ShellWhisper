@@ -22,6 +22,7 @@ impl User {
         }
     }
 
+    //TODO: create a verification of user alias, if it is already in use
     pub async fn create(self, pool: &PgPool) -> Result<User, sqlx::Error> {
         let user = sqlx::query_as::<_, User>(
             "INSERT INTO chat.user (alias, created_at, status) 

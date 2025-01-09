@@ -1,8 +1,10 @@
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
 use crate::server_state::State;
 use crate::server_error::ServerError;
 use super::user::User;
+use super::user_ip::UserIp;
+use sqlx::{Pool, Postgres};
 
 pub async fn handle_connection(
     mut socket: tokio::net::TcpStream, 
@@ -21,9 +23,7 @@ pub async fn handle_connection(
     if let Ok(addr) = socket.peer_addr() {
         println!("{} connection succeed", &addr);
 
-        let user = User::new("user".to_string());
-        dbg!(&user);
-        user.create(&state.db_pool).await.expect("Failed to create user");
+        user_connection_db(&state.db_pool, &addr).await;
 
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
@@ -60,4 +60,11 @@ pub async fn handle_connection(
 
 }
 
+async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
+    let user = User::new("falano de tal 2".to_string());
+    dbg!(&user);
+    let user_created = user.create(db_pool).await.expect("Failed to create user");
 
+    let user_ip = UserIp::new(user_created.id, *addr);
+    user_ip.create(db_pool).await.expect("Failed to create user ip"); //FIXME: erro aqui na hora de criar o user_ip
+}
