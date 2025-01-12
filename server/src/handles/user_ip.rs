@@ -1,6 +1,6 @@
 use sqlx::types::chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
-use sqlx::{PgPool, Row}; 
+use sqlx::{PgPool, Row, postgres::PgRow}; 
 use std::net::{SocketAddr, IpAddr};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -12,12 +12,14 @@ pub struct UserIp {
     pub last_seen_at: DateTime<Utc>,
 }
 
-impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for UserIp {
-    fn from_row(row: &'r sqlx::postgres::PgRow) -> Result<Self, sqlx::Error> {
+impl<'r> sqlx::FromRow<'r, PgRow> for UserIp {
+    
+    fn from_row(row: &'r PgRow) -> Result<Self, sqlx::Error> {
+        
         Ok(UserIp {
             id: row.try_get("id")?,
             user_id: row.try_get("user_id")?,
-            ip_address: row.try_get::<String, _>("ip_address")?.parse().unwrap(),
+            ip_address: row.try_get("ip_address")?,
             first_seen_at: row.try_get("first_seen_at")?,
             last_seen_at: row.try_get("last_seen_at")?,
         })
@@ -37,7 +39,6 @@ impl UserIp {
     }
 
     pub async fn create(self, pool: &PgPool) -> Result<UserIp, sqlx::Error> {
-        let ip_str = self.ip_address.to_string();
         let user_ip = sqlx::query_as::<_, UserIp>(
             "INSERT INTO chat.user_ip (user_id, ip_address, first_seen_at, last_seen_at) 
              VALUES ($1, $2::inet, $3, $4) 
@@ -46,7 +47,7 @@ impl UserIp {
              RETURNING *"
         )
         .bind(self.user_id)
-        .bind(&ip_str)  
+        .bind(self.ip_address.to_string())
         .bind(self.first_seen_at)
         .bind(self.last_seen_at)
         .fetch_one(pool)

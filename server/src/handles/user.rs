@@ -24,18 +24,42 @@ impl User {
 
     //TODO: create a verification of user alias, if it is already in use
     pub async fn create(self, pool: &PgPool) -> Result<User, sqlx::Error> {
-        let user = sqlx::query_as::<_, User>(
-            "INSERT INTO chat.user (alias, created_at, status) 
-             VALUES ($1, $2, $3) 
-             RETURNING *"
+   
+        let existing_user = sqlx::query_as::<_, User>(
+            "UPDATE chat.user 
+             SET last_login_at = CURRENT_TIMESTAMP,
+                 status = $1
+             WHERE alias = $2
+             RETURNING id, alias, created_at, last_login_at, status"
         )
-        .bind(&self.alias)
-        .bind(self.created_at)
         .bind(&self.status)
-        .fetch_one(pool)
+        .bind(&self.alias)
+        .fetch_optional(pool)
         .await?;
 
-        Ok(user)
+  
+        match existing_user {
+            Some(user) => Ok(user),
+            None => {
+                let new_user = sqlx::query_as::<_, User>(
+                    "INSERT INTO chat.user (
+                        alias, 
+                        created_at,
+                        last_login_at,
+                        status
+                    ) 
+                    VALUES ($1, $2, CURRENT_TIMESTAMP, $3) 
+                    RETURNING id, alias, created_at, last_login_at, status"
+                )
+                .bind(&self.alias)
+                .bind(self.created_at)
+                .bind(&self.status)
+                .fetch_one(pool)
+                .await?;
+
+                Ok(new_user)
+            }
+        }
     }
 
     pub async fn set_online(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
