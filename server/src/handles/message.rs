@@ -1,6 +1,6 @@
-use chrono::{DateTime, Utc};
+use chrono::{NaiveDateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Message {
@@ -9,7 +9,7 @@ pub struct Message {
     pub receiver_id: i32,
     pub content: String,
     pub content_type: String,
-    pub created_at: Option<DateTime<Utc>>,
+    pub created_at: Option<NaiveDateTime>,
     pub status: String,
     pub is_encrypted: bool,
 }
@@ -22,7 +22,7 @@ impl Message {
             receiver_id,
             content,
             content_type: "text".to_string(),
-            created_at: Some(Utc::now()),
+            created_at: Some(Utc::now().naive_utc()),
             status: "sent".to_string(),
             is_encrypted: false,
         }

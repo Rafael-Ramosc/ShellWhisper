@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
-use sqlx::types::chrono::{DateTime, Utc};
+use sqlx::types::chrono::{NaiveDateTime, Utc};
 use sqlx::PgPool;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct User {
     pub id: i32,
     pub alias: String,
-    pub created_at: DateTime<Utc>,
-    pub last_login_at: DateTime<Utc>,
+    pub created_at: NaiveDateTime,
+    pub last_login_at: NaiveDateTime,
     pub status: String,
 }
 
@@ -16,9 +16,9 @@ impl User {
         Self {
             id: 0,
             alias,
-            created_at: Utc::now(),
-            last_login_at: Utc::now(),
-            status: "offline".to_string(),
+            created_at: Utc::now().naive_utc(),
+            last_login_at: Utc::now().naive_utc(),
+            status: "online".to_string(),
         }
     }
 
@@ -60,9 +60,14 @@ impl User {
         }
     }
 
-    pub async fn set_online(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
-        self.status = "online".to_string();
-        self.last_login_at = Utc::now();
+    pub async fn set_status(&mut self, pool: &PgPool) -> Result<(), sqlx::Error> {
+        match self.status.as_str() {
+            "online" => self.status = "offline".to_string(),
+            "offline" => self.status = "online".to_string(),
+            _ => self.status = "online".to_string(),
+        }
+
+        self.last_login_at = Utc::now().naive_utc();
 
         sqlx::query(
             "UPDATE chat.user 

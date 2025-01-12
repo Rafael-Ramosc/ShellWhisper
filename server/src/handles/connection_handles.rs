@@ -1,17 +1,16 @@
-use std::{net::SocketAddr, sync::Arc};
-use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
-use crate::server_state::State;
-use crate::server_error::ServerError;
 use super::user::User;
 use super::user_ip::UserIp;
+use crate::server_error::ServerError;
+use crate::server_state::State;
 use sqlx::{Pool, Postgres};
+use std::{net::SocketAddr, sync::Arc};
+use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
 
 pub async fn handle_connection(
-    mut socket: tokio::net::TcpStream, 
+    mut socket: tokio::net::TcpStream,
     state: Arc<State>,
-    id: u32
+    id: u32,
 ) -> Result<std::net::SocketAddr> {
-
     let addr = socket.peer_addr().unwrap();
 
     if !state.can_accept_connection().await {
@@ -28,7 +27,7 @@ pub async fn handle_connection(
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
         let client_total = conn_map.len();
-   
+
         println!("Active connections ({client_total}): {:?}", *conn_map);
 
         let welcome_message = "Connection establish!".as_bytes();
@@ -36,7 +35,6 @@ pub async fn handle_connection(
     }
 
     let mut buffer = [0; 1024];
-    
 
     loop {
         match socket.read(&mut buffer).await {
@@ -57,7 +55,6 @@ pub async fn handle_connection(
     }
 
     Ok(addr)
-
 }
 
 async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
@@ -65,6 +62,8 @@ async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
     let user_created = user.create(db_pool).await.expect("Failed to create user");
 
     let user_ip = UserIp::new(user_created.id, *addr);
-    user_ip.create(db_pool).await.expect("Failed to create user ip");
-
+    user_ip
+        .create(db_pool)
+        .await
+        .expect("Failed to create user ip");
 }
