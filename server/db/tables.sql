@@ -34,3 +34,14 @@ CREATE INDEX idx_message_created_at ON chat.message(created_at);
 CREATE INDEX idx_user_status ON chat.user(status);
 CREATE INDEX idx_user_alias ON chat.user(alias);
 CREATE INDEX idx_user_ip_address ON chat.user_ip(ip_address);
+
+
+INSERT INTO chat."user"
+(id, alias, created_at, last_login_at, status)
+VALUES(
+    nextval('chat.user_id_seq'), 
+    'Server', 
+    now(), 
+    now(), 
+    'Server'::text
+);

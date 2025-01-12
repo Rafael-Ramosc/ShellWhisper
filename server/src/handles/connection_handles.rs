@@ -1,3 +1,4 @@
+use super::message::Message;
 use super::user::User;
 use super::user_ip::UserIp;
 use crate::server_error::ServerError;
@@ -40,6 +41,8 @@ pub async fn handle_connection(
         socket.write_all(welcome_message).await?;
     }
 
+    let user_id = user.as_ref().unwrap().id;
+
     let mut buffer = [0; 1024];
 
     loop {
@@ -51,6 +54,7 @@ pub async fn handle_connection(
             }
             Ok(n) => {
                 let text = String::from_utf8_lossy(&buffer[..n]);
+                insert_message(text.to_string().trim().to_string(), user_id, &state.db_pool).await; //need to find a better way to do this
                 print!("{}: {}", addr, text);
             }
             Err(e) => {
@@ -81,4 +85,12 @@ async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) -> User
         .expect("Failed to create user ip");
 
     user_created
+}
+
+async fn insert_message(text: String, sender_id: i32, pool: &Pool<Postgres>) {
+    let message = Message::new(sender_id, 1, text);
+    message
+        .insert(pool)
+        .await
+        .expect("Failed to insert message");
 }
