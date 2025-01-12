@@ -62,9 +62,9 @@ pub async fn handle_connection(
 
 async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
     let user = User::new("falano de tal 8".to_string());
-    dbg!(&user);
     let user_created = user.create(db_pool).await.expect("Failed to create user");
 
     let user_ip = UserIp::new(user_created.id, *addr);
     user_ip.create(db_pool).await.expect("Failed to create user ip");
+
 }
