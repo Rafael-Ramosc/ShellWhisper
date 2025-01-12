@@ -10,19 +10,25 @@ pub async fn handle_connection(
     mut socket: tokio::net::TcpStream,
     state: Arc<State>,
     id: u32,
-) -> Result<std::net::SocketAddr> {
+) -> Result<(std::net::SocketAddr, User)> {
     let addr = socket.peer_addr().unwrap();
 
     if !state.can_accept_connection().await {
         let error = ServerError::max_connections_reached();
         println!("{} connection failed: {}", addr, error);
-        return Ok(addr);
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Max connections reached",
+        ));
     }
+
+    let mut user = None;
 
     if let Ok(addr) = socket.peer_addr() {
         println!("{} connection succeed", &addr);
 
-        user_connection_db(&state.db_pool, &addr).await;
+        // Store the created user
+        user = Some(user_connection_db(&state.db_pool, &addr).await);
 
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
@@ -54,10 +60,17 @@ pub async fn handle_connection(
         }
     }
 
-    Ok(addr)
+    if let Some(user) = user {
+        Ok((addr, user))
+    } else {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "Failed to create user", //TODO: create a custom error
+        ))
+    }
 }
 
-async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
+async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) -> User {
     let user = User::new("falano de tal 8".to_string());
     let user_created = user.create(db_pool).await.expect("Failed to create user");
 
@@ -66,4 +79,6 @@ async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) {
         .create(db_pool)
         .await
         .expect("Failed to create user ip");
+
+    user_created
 }
