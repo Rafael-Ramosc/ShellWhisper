@@ -2,12 +2,37 @@ use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
+const MESSAGE_TYPE_ERROR: u8 = 0x01;
+const MESSAGE_TYPE_WARNING: u8 = 0x02;
+const MESSAGE_TYPE_INFO: u8 = 0x03;
+const MESSAGE_TYPE_TEXT: u8 = 0x04;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum MessageType {
     Warning,
     Info,
     Error,
     Text,
+}
+
+impl MessageType {
+    pub fn from_byte(byte: u8) -> Self {
+        match byte {
+            MESSAGE_TYPE_ERROR => MessageType::Error,
+            MESSAGE_TYPE_WARNING => MessageType::Warning,
+            MESSAGE_TYPE_INFO => MessageType::Info,
+            _ => MessageType::Text,
+        }
+    }
+
+    pub fn to_byte(&self) -> u8 {
+        match self {
+            MessageType::Error => MESSAGE_TYPE_ERROR,
+            MessageType::Warning => MESSAGE_TYPE_WARNING,
+            MessageType::Info => MESSAGE_TYPE_INFO,
+            MessageType::Text => MESSAGE_TYPE_TEXT,
+        }
+    }
 }
 
 impl ToString for MessageType {
@@ -56,6 +81,52 @@ impl Message {
             status: "sent".to_string(),
             is_encrypted: false,
         }
+    }
+
+    pub fn from_buffer(buffer: &[u8], n: usize, sender_id: i32, receiver_id: i32) -> Self {
+        let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+
+        let parts: Vec<&str> = text.splitn(2, "|").collect();
+
+        let (message_type, content) = match parts.as_slice() {
+            [type_str, content] => {
+                let cleaned_type = type_str
+                    .trim()
+                    .replace(" ", "")
+                    .trim_start_matches("0x")
+                    .to_lowercase();
+
+                let type_byte = match cleaned_type.as_str() {
+                    "01" | "1" => MESSAGE_TYPE_ERROR,
+                    "02" | "2" => MESSAGE_TYPE_WARNING,
+                    "03" | "3" => MESSAGE_TYPE_INFO,
+                    _ => MESSAGE_TYPE_TEXT,
+                };
+
+                (
+                    MessageType::from_byte(type_byte),
+                    content.trim().to_string(),
+                )
+            }
+            _ => (MessageType::Text, text),
+        };
+
+        Message {
+            id: None,
+            sender_id,
+            receiver_id,
+            content,
+            content_type: message_type,
+            created_at: Some(Utc::now().naive_utc()),
+            status: "sent".to_string(),
+            is_encrypted: false,
+        }
+    }
+
+    // Método para formatar a mensagem para envio
+    pub fn to_buffer(&self) -> Vec<u8> {
+        let formatted = format!("0x{:02x} | {}", self.content_type.to_byte(), self.content);
+        formatted.into_bytes()
     }
 
     pub async fn insert(&self, pool: &PgPool) -> Result<Message, sqlx::Error> {

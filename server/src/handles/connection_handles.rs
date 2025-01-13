@@ -55,9 +55,16 @@ pub async fn handle_connection(
                 break;
             }
             Ok(n) => {
-                let text = String::from_utf8_lossy(&buffer[..n]);
-                insert_message(text.to_string().trim().to_string(), user_id, &state.db_pool).await; //need to find a better way to do this
-                print!("{}: {}", user_alias, text);
+                let message = Message::from_buffer(&buffer, n, user_id, 1);
+                let message = message
+                    .insert(&state.db_pool)
+                    .await
+                    .expect("Failed to insert message");
+
+                println!(
+                    "{}: {} (Type: {:?})",
+                    user_alias, message.content, message.content_type
+                );
             }
             Err(e) => {
                 println!("Error reading data: {:?}", e);
@@ -91,6 +98,15 @@ async fn user_connection_db(
         .expect("Failed to create user ip");
 
     user_created
+}
+
+async fn receive_message(n: usize, buffer: &[u8], user_id: i32, pool: &Pool<Postgres>) -> String {
+    let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+
+    // Insere a mensagem no banco de dados
+    insert_message(text.clone(), user_id, pool).await;
+
+    text
 }
 
 async fn insert_message(text: String, sender_id: i32, pool: &Pool<Postgres>) {
