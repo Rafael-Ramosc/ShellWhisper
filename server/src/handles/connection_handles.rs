@@ -13,6 +13,7 @@ pub async fn handle_connection(
     id: u32,
 ) -> Result<(std::net::SocketAddr, User)> {
     let addr = socket.peer_addr().unwrap();
+    let user_selected_alias = "User".to_string();
 
     if !state.can_accept_connection().await {
         let error = ServerError::max_connections_reached();
@@ -29,7 +30,7 @@ pub async fn handle_connection(
         println!("{} connection succeed", &addr);
 
         // Store the created user
-        user = Some(user_connection_db(&state.db_pool, &addr).await);
+        user = Some(user_connection_db(&state.db_pool, &addr, user_selected_alias).await);
 
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
@@ -75,8 +76,12 @@ pub async fn handle_connection(
     }
 }
 
-async fn user_connection_db(db_pool: &Pool<Postgres>, addr: &SocketAddr) -> User {
-    let user = User::new("falano de tal 8".to_string());
+async fn user_connection_db(
+    db_pool: &Pool<Postgres>,
+    addr: &SocketAddr,
+    user_selected_alias: String,
+) -> User {
+    let user = User::new(user_selected_alias.to_string());
     let user_created = user.create(db_pool).await.expect("Failed to create user");
 
     let user_ip = UserIp::new(user_created.id, *addr);
