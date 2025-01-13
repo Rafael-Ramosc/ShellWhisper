@@ -42,6 +42,7 @@ pub async fn handle_connection(
     }
 
     let user_id = user.as_ref().unwrap().id;
+    let user_alias = user.as_ref().unwrap().alias.clone();
 
     let mut buffer = [0; 1024];
 
@@ -55,7 +56,7 @@ pub async fn handle_connection(
             Ok(n) => {
                 let text = String::from_utf8_lossy(&buffer[..n]);
                 insert_message(text.to_string().trim().to_string(), user_id, &state.db_pool).await; //need to find a better way to do this
-                print!("{}: {}", addr, text);
+                print!("{}: {}", user_alias, text);
             }
             Err(e) => {
                 println!("Error reading data: {:?}", e);
