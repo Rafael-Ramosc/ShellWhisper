@@ -22,7 +22,6 @@ impl User {
         }
     }
 
-    //TODO: create a verification of user alias, if it is already in use
     pub async fn create(self, pool: &PgPool) -> Result<User, sqlx::Error> {
         let existing_user = sqlx::query_as::<_, User>(
             "UPDATE chat.user 

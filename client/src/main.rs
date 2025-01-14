@@ -5,6 +5,8 @@ use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    const MESSAGE_TYPE_WARNING: u8 = 0x02; //just for test
+
     let server_address = "127.0.0.1:8080";
     let mut stream = TcpStream::connect(server_address).await?;
     println!("Connected {}", server_address);
@@ -29,9 +31,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         io::stdin().read_line(&mut input)?;
 
         let message = input.trim();
-
+        let mensage_with_type: String = format!("0x{:02x} | {}", MESSAGE_TYPE_WARNING, message);
         send_message(&mut stream, message).await?;
-        println!("Mensagem enviada: {}", message);
+        println!("Mensagem enviada: {}", mensage_with_type); //dont work
     }
 
     Ok(())
