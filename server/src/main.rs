@@ -49,7 +49,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if let Err(e) = user.set_status(&state.db_pool).await {
                         println!("Error updating user status: {:?}", e);
                     }
-                    println!("{} Connection closed", addr)
+                    println!("{} Connection closed", user.alias)
                 }
                 Err(e) => println!("Error: {:?}", e),
             };

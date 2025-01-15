@@ -1,3 +1,4 @@
+use super::user::User;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -91,7 +92,6 @@ impl Message {
 
     pub fn from_buffer(buffer: &[u8], n: usize, sender_id: i32, receiver_id: i32) -> Self {
         let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
-        dbg!(&text);
 
         let parts: Vec<&str> = text.splitn(2, "|").collect();
 
@@ -131,10 +131,24 @@ impl Message {
         }
     }
 
-    // Método para formatar a mensagem para envio
     pub fn to_buffer(&self) -> Vec<u8> {
         let formatted = format!("0x{:02x} | {}", self.content_type.to_byte(), self.content);
         formatted.into_bytes()
+    }
+
+    pub fn server_info(info_message: String, user: &User) -> Vec<u8> {
+        let server_info = Message {
+            id: None,
+            sender_id: 1,
+            receiver_id: user.id,
+            content: info_message,
+            content_type: MessageType::Info,
+            created_at: Some(Utc::now().naive_utc()),
+            status: "sent".to_string(),
+            is_encrypted: false,
+        };
+
+        server_info.to_buffer()
     }
 
     pub async fn insert(&self, pool: &PgPool) -> Result<Message, sqlx::Error> {

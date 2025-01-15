@@ -23,13 +23,16 @@ pub async fn handle_connection(
         ));
     }
 
+    let welcome_message = "Connection established!".as_bytes();
+    socket.write_all(welcome_message).await?;
+
     let mut buffer = [0; 1024];
     let user = read_alias(&mut buffer, &mut socket, &state, &addr).await?;
 
     let user_alias = user.alias.clone();
 
     if let Ok(addr) = socket.peer_addr() {
-        println!("{} connection succeed", &addr);
+        println!("{} connection succeed", &user_alias);
 
         // Store the created user
         Some(user_connection_db(&state.db_pool, &addr, &user_alias).await);
@@ -39,9 +42,6 @@ pub async fn handle_connection(
         let client_total = conn_map.len();
 
         println!("Active connections ({client_total}): {:?}", *conn_map);
-
-        let welcome_message = "Connection establish!".as_bytes();
-        socket.write_all(welcome_message).await?;
     }
 
     let user_id = user.id;
@@ -92,23 +92,6 @@ async fn user_connection_db(
     user_created
 }
 
-// async fn receive_message(n: usize, buffer: &[u8], user_id: i32, pool: &Pool<Postgres>) -> String {
-//     let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
-
-//     // Insere a mensagem no banco de dados
-//     insert_message(text.clone(), user_id, pool).await;
-
-//     text
-// }
-
-// async fn insert_message(text: String, sender_id: i32, pool: &Pool<Postgres>) {
-//     let message = Message::new(sender_id, 1, text);
-//     message
-//         .insert(pool)
-//         .await
-//         .expect("Failed to insert message");
-// }
-
 async fn read_alias(
     buffer: &mut [u8],
     socket: &mut tokio::net::TcpStream,
@@ -120,9 +103,6 @@ async fn read_alias(
             let message = Message::from_buffer(buffer, n, 0, 1);
             if message.content_type == MessageType::Alias {
                 let user = user_connection_db(&state.db_pool, addr, &message.content).await;
-
-                let welcome_message = "Connection established!".as_bytes();
-                socket.write_all(welcome_message).await?;
 
                 Ok(user)
             } else {
