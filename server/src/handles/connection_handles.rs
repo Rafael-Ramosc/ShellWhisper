@@ -1,4 +1,4 @@
-use super::message::Message;
+use super::message::{Message, MessageType};
 use super::user::User;
 use super::user_ip::UserIp;
 use crate::server_error::ServerError;
@@ -13,7 +13,6 @@ pub async fn handle_connection(
     id: u32,
 ) -> Result<(std::net::SocketAddr, User)> {
     let addr = socket.peer_addr().unwrap();
-    let user_selected_alias = "User".to_string();
 
     if !state.can_accept_connection().await {
         let error = ServerError::max_connections_reached();
@@ -24,13 +23,16 @@ pub async fn handle_connection(
         ));
     }
 
-    let mut user = None;
+    let mut buffer = [0; 1024];
+    let user = read_alias(&mut buffer, &mut socket, &state, &addr).await?;
+
+    let user_alias = user.alias.clone();
 
     if let Ok(addr) = socket.peer_addr() {
         println!("{} connection succeed", &addr);
 
         // Store the created user
-        user = Some(user_connection_db(&state.db_pool, &addr, user_selected_alias).await);
+        Some(user_connection_db(&state.db_pool, &addr, &user_alias).await);
 
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
@@ -42,10 +44,7 @@ pub async fn handle_connection(
         socket.write_all(welcome_message).await?;
     }
 
-    let user_id = user.as_ref().unwrap().id;
-    let user_alias = user.as_ref().unwrap().alias.clone();
-
-    let mut buffer = [0; 1024];
+    let user_id = user.id;
 
     loop {
         match socket.read(&mut buffer).await {
@@ -73,20 +72,13 @@ pub async fn handle_connection(
         }
     }
 
-    if let Some(user) = user {
-        Ok((addr, user))
-    } else {
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Failed to create user", //TODO: create a custom error
-        ))
-    }
+    Ok((addr, user))
 }
 
 async fn user_connection_db(
     db_pool: &Pool<Postgres>,
     addr: &SocketAddr,
-    user_selected_alias: String,
+    user_selected_alias: &String,
 ) -> User {
     let user = User::new(user_selected_alias.to_string());
     let user_created = user.create(db_pool).await.expect("Failed to create user");
@@ -100,19 +92,49 @@ async fn user_connection_db(
     user_created
 }
 
-async fn receive_message(n: usize, buffer: &[u8], user_id: i32, pool: &Pool<Postgres>) -> String {
-    let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+// async fn receive_message(n: usize, buffer: &[u8], user_id: i32, pool: &Pool<Postgres>) -> String {
+//     let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
 
-    // Insere a mensagem no banco de dados
-    insert_message(text.clone(), user_id, pool).await;
+//     // Insere a mensagem no banco de dados
+//     insert_message(text.clone(), user_id, pool).await;
 
-    text
-}
+//     text
+// }
 
-async fn insert_message(text: String, sender_id: i32, pool: &Pool<Postgres>) {
-    let message = Message::new(sender_id, 1, text);
-    message
-        .insert(pool)
-        .await
-        .expect("Failed to insert message");
+// async fn insert_message(text: String, sender_id: i32, pool: &Pool<Postgres>) {
+//     let message = Message::new(sender_id, 1, text);
+//     message
+//         .insert(pool)
+//         .await
+//         .expect("Failed to insert message");
+// }
+
+async fn read_alias(
+    buffer: &mut [u8],
+    socket: &mut tokio::net::TcpStream,
+    state: &Arc<State>,
+    addr: &SocketAddr,
+) -> Result<User> {
+    match socket.read(buffer).await {
+        Ok(n) => {
+            let message = Message::from_buffer(buffer, n, 0, 1);
+            if message.content_type == MessageType::Alias {
+                let user = user_connection_db(&state.db_pool, addr, &message.content).await;
+
+                let welcome_message = "Connection established!".as_bytes();
+                socket.write_all(welcome_message).await?;
+
+                Ok(user)
+            } else {
+                Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "First message must be alias",
+                ))
+            }
+        }
+        Err(e) => {
+            println!("Error reading alias: {:?}", e);
+            Err(e)
+        }
+    }
 }

@@ -6,13 +6,15 @@ const MESSAGE_TYPE_ERROR: u8 = 0x01;
 const MESSAGE_TYPE_WARNING: u8 = 0x02;
 const MESSAGE_TYPE_INFO: u8 = 0x03;
 const MESSAGE_TYPE_TEXT: u8 = 0x04;
+const MESSAGE_TYPE_ALIAS: u8 = 0x05;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum MessageType {
     Warning,
     Info,
     Error,
     Text,
+    Alias,
 }
 
 impl MessageType {
@@ -21,6 +23,7 @@ impl MessageType {
             MESSAGE_TYPE_ERROR => MessageType::Error,
             MESSAGE_TYPE_WARNING => MessageType::Warning,
             MESSAGE_TYPE_INFO => MessageType::Info,
+            MESSAGE_TYPE_ALIAS => MessageType::Alias,
             _ => MessageType::Text,
         }
     }
@@ -31,6 +34,7 @@ impl MessageType {
             MessageType::Warning => MESSAGE_TYPE_WARNING,
             MessageType::Info => MESSAGE_TYPE_INFO,
             MessageType::Text => MESSAGE_TYPE_TEXT,
+            MessageType::Alias => MESSAGE_TYPE_ALIAS,
         }
     }
 }
@@ -42,6 +46,7 @@ impl ToString for MessageType {
             MessageType::Info => "info".to_string(),
             MessageType::Error => "error".to_string(),
             MessageType::Text => "text".to_string(),
+            MessageType::Alias => "alias".to_string(),
         }
     }
 }
@@ -52,6 +57,7 @@ impl From<String> for MessageType {
             "warning" => MessageType::Warning,
             "info" => MessageType::Info,
             "error" => MessageType::Error,
+            "alias" => MessageType::Alias,
             _ => MessageType::Text,
         }
     }
@@ -85,6 +91,7 @@ impl Message {
 
     pub fn from_buffer(buffer: &[u8], n: usize, sender_id: i32, receiver_id: i32) -> Self {
         let text = String::from_utf8_lossy(&buffer[..n]).trim().to_string();
+        dbg!(&text);
 
         let parts: Vec<&str> = text.splitn(2, "|").collect();
 
@@ -100,6 +107,7 @@ impl Message {
                     "01" | "1" => MESSAGE_TYPE_ERROR,
                     "02" | "2" => MESSAGE_TYPE_WARNING,
                     "03" | "3" => MESSAGE_TYPE_INFO,
+                    "05" | "5" => MESSAGE_TYPE_ALIAS,
                     _ => MESSAGE_TYPE_TEXT,
                 };
 
