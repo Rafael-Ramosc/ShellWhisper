@@ -1,5 +1,4 @@
 mod handles;
-mod server_error;
 mod server_state;
 
 use dotenv::dotenv;

@@ -1,5 +1,5 @@
 pub enum ServerErrorKind {
-   MaxConnectionsReached,
+    MaxConnectionsReached,
 }
 
 pub struct ServerError {
@@ -17,23 +17,11 @@ impl ServerError {
         }
     }
 
-    pub fn kind(&self) -> &ServerErrorKind {
-        &self.kind
-    }
-
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
-    pub fn code(&self) -> u16 {
-        self.code
-    }
-
     pub fn max_connections_reached() -> Self {
         Self::new(
             ServerErrorKind::MaxConnectionsReached,
             "Max connections reached".to_string(),
-            100
+            100,
         )
     }
 }

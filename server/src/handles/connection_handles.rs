@@ -1,7 +1,7 @@
+use super::error::ServerError;
 use super::message::{Message, MessageType};
 use super::user::User;
 use super::user_ip::UserIp;
-use crate::server_error::ServerError;
 use crate::server_state::State;
 use sqlx::{Pool, Postgres};
 use std::{net::SocketAddr, sync::Arc};
