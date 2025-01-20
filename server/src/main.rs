@@ -1,12 +1,20 @@
 mod handles;
 mod server_state;
+mod ui;
 
 use dotenv::dotenv;
-
 use handles::connection_handles::handle_connection;
+use ratatui::{
+    backend::CrosstermBackend,
+    crossterm::{
+        event::EnableMouseCapture,
+        execute,
+        terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    },
+    Terminal,
+};
 use server_state::State;
-use std::env;
-use std::sync::Arc;
+use std::{env, sync::Arc};
 use tokio::net::TcpListener;
 
 #[tokio::main]
@@ -33,25 +41,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Successfully connected to database");
 
-    // accept connections
-    loop {
-        let (socket, addr) = listener.accept().await?; //TODO: handle error kind
-        println!("{} is connecting...", addr);
+    let server_state = state.clone();
 
-        let state = state.clone();
+    let server_task = tokio::spawn(async move {
+        loop {
+            match listener.accept().await {
+                Ok((socket, addr)) => {
+                    println!("{} is connecting...", addr);
 
-        // new task
-        tokio::spawn(async move {
-            let id = State::id_increment(&state).await;
-            match handle_connection(socket, state.clone(), id).await {
-                Ok((addr, mut user)) => {
-                    if let Err(e) = user.set_status(&state.db_pool).await {
-                        println!("Error updating user status: {:?}", e);
-                    }
-                    println!("{} Connection closed", user.alias)
+                    let state = server_state.clone();
+
+                    tokio::spawn(async move {
+                        let id = State::id_increment(&state).await;
+                        match handle_connection(socket, state.clone(), id).await {
+                            Ok((addr, mut user)) => {
+                                if let Err(e) = user.set_status(&state.db_pool).await {
+                                    println!("Error updating user status: {:?}", e);
+                                }
+                                println!("{} Connection closed", user.alias)
+                            }
+                            Err(e) => println!("Error: {:?}", e),
+                        };
+                    });
                 }
-                Err(e) => println!("Error: {:?}", e),
-            };
-        });
-    }
+                Err(e) => {
+                    println!("Error accepting connection: {:?}", e);
+                    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                }
+            }
+        }
+    });
+
+    enable_raw_mode()?;
+    let mut stdout = std::io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    ui::run_app(&mut terminal, state.clone()).await?;
+
+    disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        EnableMouseCapture
+    )?;
+    terminal.show_cursor()?;
+
+    Ok(())
 }
