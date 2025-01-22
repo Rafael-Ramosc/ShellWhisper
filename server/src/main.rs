@@ -7,7 +7,7 @@ use handles::connection_handles::handle_connection;
 use ratatui::{
     backend::CrosstermBackend,
     crossterm::{
-        event::EnableMouseCapture,
+        event::{DisableMouseCapture, EnableMouseCapture},
         execute,
         terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     },
@@ -74,7 +74,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     enable_raw_mode()?;
     let mut stdout = std::io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
 
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
@@ -85,8 +85,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     execute!(
         terminal.backend_mut(),
         LeaveAlternateScreen,
-        EnableMouseCapture
+        DisableMouseCapture
     )?;
+    terminal.clear()?;
     terminal.show_cursor()?;
 
     Ok(())
