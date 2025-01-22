@@ -1,6 +1,5 @@
-pub mod ui_chat_screen;
 pub mod ui_control;
-pub mod ui_main_screen;
+pub mod ui_screen;
 pub mod ui_state;
 
 use crate::server_state::State;
@@ -10,9 +9,8 @@ use ratatui::{
     Terminal,
 };
 use std::sync::Arc;
-use ui_chat_screen::render_chat;
 use ui_control::ui_control;
-use ui_main_screen::render_main;
+use ui_screen::render_screen;
 use ui_state::{CurrentScreen, UiState};
 
 pub async fn run_app<B: Backend>(
@@ -23,8 +21,8 @@ pub async fn run_app<B: Backend>(
 
     loop {
         terminal.draw(|f| match ui_state.current_screen {
-            CurrentScreen::Main => render_main(f, &ui_state),
-            CurrentScreen::Chating => render_chat(f, &ui_state),
+            CurrentScreen::Main => render_screen(f, &ui_state),
+            CurrentScreen::Chating => render_screen(f, &ui_state),
             CurrentScreen::Exiting => {}
         })?;
 

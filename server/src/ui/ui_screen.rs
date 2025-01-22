@@ -7,14 +7,14 @@ use ratatui::{
     Frame,
 };
 
-pub fn render_main(f: &mut Frame, ui_state: &UiState) {
+pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
         .split(f.area());
 
     let title = Paragraph::new(Span::styled(
-        "main screen - Press 'c' to chat, 'q' to quit",
+        ui_state.title.clone(),
         Style::default().fg(Color::Green),
     ))
     .block(Block::default().borders(Borders::ALL));
