@@ -9,7 +9,7 @@ pub fn ui_control(ui_state: &mut UiState, key: Event) {
                 KeyCode::Char('c') => ui_state.toggle_screen(),
                 _ => {}
             },
-            CurrentScreen::Chating => match code {
+            CurrentScreen::Chatting => match code {
                 KeyCode::Esc => ui_state.toggle_screen(),
                 KeyCode::Char(c) => ui_state.chat_messages.push(c.to_string()),
                 KeyCode::Backspace => {

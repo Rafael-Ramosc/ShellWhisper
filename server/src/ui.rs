@@ -22,7 +22,7 @@ pub async fn run_app<B: Backend>(
     loop {
         terminal.draw(|f| match ui_state.current_screen {
             CurrentScreen::Main => render_screen(f, &ui_state),
-            CurrentScreen::Chating => render_screen(f, &ui_state),
+            CurrentScreen::Chatting => render_screen(f, &ui_state),
             CurrentScreen::Exiting => {}
         })?;
 

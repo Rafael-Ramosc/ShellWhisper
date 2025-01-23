@@ -1,6 +1,6 @@
 pub enum CurrentScreen {
     Main,
-    Chating,
+    Chatting,
     Exiting,
 }
 
@@ -17,18 +17,18 @@ impl UiState {
             current_screen: CurrentScreen::Main,
             user_name: String::new(),
             chat_messages: Vec::new(),
-            title: String::from("Main Screen"),
+            title: String::from("ShellWhisper"),
         }
     }
 
     pub fn toggle_screen(&mut self) {
         self.current_screen = match self.current_screen {
             CurrentScreen::Main => {
-                self.title = String::from("Chat Screen");
-                CurrentScreen::Chating
+                self.title = String::from("ShellWhisper (Chat Mode)");
+                CurrentScreen::Chatting
             }
-            CurrentScreen::Chating => {
-                self.title = String::from("Main Screen");
+            CurrentScreen::Chatting => {
+                self.title = String::from("ShellWhisper");
                 CurrentScreen::Main
             }
             CurrentScreen::Exiting => CurrentScreen::Exiting,
