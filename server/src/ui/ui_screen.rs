@@ -8,28 +8,6 @@ use ratatui::{
 };
 
 pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
-    let title_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default());
-
-    let title = Paragraph::new(Text::styled(
-        ui_state.title.clone(),
-        Style::default().fg(Color::Green),
-    ))
-    .block(title_block);
-
-    let instructions = navigation_instructions(ui_state);
-
-    let middle = Paragraph::new(Text::styled(
-        "Chat window",
-        Style::default().fg(Color::Yellow),
-    ))
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .title_bottom(instructions.centered()),
-    );
-
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -39,24 +17,68 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
         ])
         .split(f.area());
 
-    let footer_chuncks = Layout::default()
+    // -------- TITLE ----------
+
+    let title_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default());
+
+    let title = Paragraph::new(Text::styled(
+        ui_state.title.clone(),
+        Style::default().fg(Color::Green),
+    ))
+    .alignment(Alignment::Center)
+    .block(title_block);
+
+    // -------- MIDDLE ----------
+
+    let instructions = navigation_instructions(ui_state);
+
+    let middle_chunks = Layout::default()
         .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(55), Constraint::Percentage(45)])
+        .split(chunks[1]);
+
+    let right_chunks = Layout::default()
+        .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(chunks[2]);
+        .split(middle_chunks[1]);
 
-    let navigation_text =
-        Paragraph::new("Navigation").block(Block::default().borders(Borders::ALL));
+    let left_panel = Paragraph::new(Text::styled(
+        "CHAT WINDOW",
+        Style::default().fg(Color::Yellow),
+    ))
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title_bottom(instructions.centered()),
+    );
 
-    let creator_text = Paragraph::new(Span::styled(
-        "Created by: Rafael Ramos",
+    let top_right = Paragraph::new(Text::styled(
+        "USERS CONNECTED",
+        Style::default().fg(Color::Yellow),
+    ))
+    .block(Block::default().borders(Borders::ALL));
+
+    let bottom_right = Paragraph::new(Text::styled(
+        "SYSTEM LOG",
+        Style::default().fg(Color::Yellow),
+    ))
+    .block(Block::default().borders(Borders::ALL));
+
+    // -------- FOOTER ----------
+
+    let footer = Paragraph::new(Span::styled(
+        "MESSAGE WILL BE SEND HERE | Created by: Rafael Ramos",
         Style::default().fg(Color::Red),
     ))
     .block(Block::default().borders(Borders::ALL));
 
     f.render_widget(title, chunks[0]);
-    f.render_widget(middle, chunks[1]);
-    f.render_widget(navigation_text, footer_chuncks[0]);
-    f.render_widget(creator_text, footer_chuncks[1]);
+    f.render_widget(left_panel, middle_chunks[0]);
+    f.render_widget(top_right, right_chunks[0]);
+    f.render_widget(bottom_right, right_chunks[1]);
+    f.render_widget(footer, chunks[2]);
 }
 
 fn navigation_instructions(ui_state: &UiState) -> Line<'_> {
