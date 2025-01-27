@@ -8,6 +8,10 @@ use ratatui::{
 };
 
 pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
+    //--------- MESSAGE HANDLING ----------
+
+    // -------- MAIN LAYOUT ----------
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -45,7 +49,7 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
         .split(middle_chunks[1]);
 
     let left_panel = Paragraph::new(Text::styled(
-        "CHAT WINDOW",
+        ui_state.chat_messages.join("\n"),
         Style::default().fg(Color::Yellow),
     ))
     .block(
@@ -55,7 +59,7 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
     );
 
     let top_right = Paragraph::new(Text::styled(
-        "USERS CONNECTED",
+        "USER LIST",
         Style::default().fg(Color::Yellow),
     ))
     .block(Block::default().borders(Borders::ALL));

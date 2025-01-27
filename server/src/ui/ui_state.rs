@@ -34,4 +34,8 @@ impl UiState {
             CurrentScreen::Exiting => CurrentScreen::Exiting,
         }
     }
+
+    pub fn add_message(&mut self, message: String) {
+        self.chat_messages.push(message);
+    }
 }

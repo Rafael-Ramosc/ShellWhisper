@@ -16,7 +16,7 @@ pub async fn handle_connection(
 
     if !state.can_accept_connection().await {
         let error = ServerError::max_connections_reached();
-        println!("{} connection failed: {}", addr, error);
+        // println!("{} connection failed: {}", addr, error); TODO: Vai pro log
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,
             "Max connections reached",
@@ -32,7 +32,7 @@ pub async fn handle_connection(
     let user_alias = user.alias.clone();
 
     if let Ok(addr) = socket.peer_addr() {
-        println!("{} connection succeed", &user_alias);
+        //println!("{} connection succeed", &user_alias); TODO: Vai pro log
 
         // Store the created user
         Some(user_connection_db(&state.db_pool, &addr, &user_alias).await);
@@ -41,7 +41,7 @@ pub async fn handle_connection(
         conn_map.insert(id, addr);
         let client_total = conn_map.len();
 
-        println!("Active connections ({client_total}): {:?}", *conn_map);
+        // println!("Active connections ({client_total}): {:?}", *conn_map); TODO: Vai pro lista de users
     }
 
     let user_id = user.id;
@@ -60,10 +60,14 @@ pub async fn handle_connection(
                     .await
                     .expect("Failed to insert message");
 
-                println!(
+                let formatted_message = format!(
                     "{}: {} (Type: {:?})",
                     user_alias, message.content, message.content_type
                 );
+                if let Err(e) = state.message_sender.send(formatted_message) {
+                    //Colocar esse erro na struct de erro
+                    println!("Error sending message: {:?}", e);
+                }
             }
             Err(e) => {
                 println!("Error reading data: {:?}", e);

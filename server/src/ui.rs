@@ -18,8 +18,15 @@ pub async fn run_app<B: Backend>(
     state: Arc<State>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut ui_state = UiState::new();
+    let mut receiver = state.message_sender.subscribe();
 
     loop {
+        if let Ok(Ok(message)) =
+            tokio::time::timeout(std::time::Duration::from_millis(10), receiver.recv()).await
+        {
+            ui_state.add_message(message);
+        }
+
         terminal.draw(|f| match ui_state.current_screen {
             CurrentScreen::Main => render_screen(f, &ui_state),
             CurrentScreen::Chatting => render_screen(f, &ui_state),

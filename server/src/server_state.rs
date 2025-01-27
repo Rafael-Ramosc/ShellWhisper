@@ -1,19 +1,20 @@
-use tokio::sync::Mutex;
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use sqlx::PgPool;
-
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use tokio::sync::{broadcast, Mutex};
 
 pub struct State {
     pub connection_list: Arc<Mutex<HashMap<u32, SocketAddr>>>,
     pub id_counter: Arc<Mutex<u32>>,
     max_connections: u32,
     pub db_pool: PgPool,
+    pub message_sender: broadcast::Sender<String>,
 }
 
 impl State {
-
-    pub async fn new(server_limit_connection: u32, database_url: &str) ->  Result<Self, sqlx::Error> {
-
+    pub async fn new(
+        server_limit_connection: u32,
+        database_url: &str,
+    ) -> Result<Self, sqlx::Error> {
         let pool = PgPool::connect(database_url).await?;
 
         Ok(State {
@@ -21,6 +22,7 @@ impl State {
             id_counter: Arc::new(Mutex::new(0)),
             max_connections: server_limit_connection,
             db_pool: pool,
+            message_sender: broadcast::channel(10).0,
         })
     }
 
@@ -40,5 +42,4 @@ impl State {
         sqlx::query("SELECT 1").execute(&self.db_pool).await?;
         Ok(())
     }
-
 }

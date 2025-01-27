@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         loop {
             match listener.accept().await {
                 Ok((socket, addr)) => {
-                    println!("{} is connecting...", addr);
+                    //println!("{} is connecting...", addr); TODO: Vai pro log
 
                     let state = server_state.clone();
 
