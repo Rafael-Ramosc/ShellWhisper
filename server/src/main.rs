@@ -15,21 +15,23 @@ use ratatui::{
 };
 use server_state::State;
 use std::{env, sync::Arc};
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::mpsc};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let server_adress = "127.0.0.1:8080".to_string();
+    let server_adress = "127.0.0.1:8080".to_string(); //TODO:> receber isso aqui no entry da applicação
     println!("Server adress: {}", &server_adress);
     let listener = TcpListener::bind(server_adress).await?;
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let server_limit_connections: u32 = 30;
+    let server_limit_connections: u32 = 30; //TODO:> receber isso aqui no entry da applicação
+
+    let (tx, rx) = mpsc::channel(100);
     let state = Arc::new(
-        State::new(server_limit_connections, &database_url)
+        State::new(server_limit_connections, &database_url, tx)
             .await
             .expect("Failed to create state with database connection"),
     );
@@ -79,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    ui::run_app(&mut terminal, state.clone()).await?;
+    ui::run_app(&mut terminal, state.clone(), rx).await?;
 
     disable_raw_mode()?;
     execute!(

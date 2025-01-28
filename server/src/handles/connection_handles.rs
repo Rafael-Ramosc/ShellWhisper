@@ -64,9 +64,9 @@ pub async fn handle_connection(
                     "{}: {} (Type: {:?})",
                     user_alias, message.content, message.content_type
                 );
-                if let Err(e) = state.message_sender.send(formatted_message) {
-                    //Colocar esse erro na struct de erro
-                    println!("Error sending message: {:?}", e);
+
+                if let Err(e) = state.message_tx.send(formatted_message).await {
+                    println!("Error sending message to UI: {:?}", e);
                 }
             }
             Err(e) => {

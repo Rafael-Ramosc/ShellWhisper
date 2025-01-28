@@ -55,6 +55,7 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
     .block(
         Block::default()
             .borders(Borders::ALL)
+            .title_top("Chat")
             .title_bottom(instructions.centered()),
     );
 
@@ -62,13 +63,21 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
         "USER LIST",
         Style::default().fg(Color::Yellow),
     ))
-    .block(Block::default().borders(Borders::ALL));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title_top("Users list"),
+    );
 
     let bottom_right = Paragraph::new(Text::styled(
         "SYSTEM LOG",
         Style::default().fg(Color::Yellow),
     ))
-    .block(Block::default().borders(Borders::ALL));
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .title_top("System log"),
+    );
 
     // -------- FOOTER ----------
 
