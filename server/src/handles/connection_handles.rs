@@ -16,7 +16,6 @@ pub async fn handle_connection(
 
     if !state.can_accept_connection().await {
         let error = ServerError::max_connections_reached();
-        // println!("{} connection failed: {}", addr, error); TODO: Vai pro log
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,
             "Max connections reached",
@@ -38,11 +37,9 @@ pub async fn handle_connection(
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
 
-        // Adicionar usuário ao user_names
         let mut user_names = state.user_names.lock().await;
         user_names.insert(id, user_alias.clone());
 
-        // Enviar mensagem de atualização
         if let Err(e) = state
             .message_tx
             .send(format!("UPDATE_USERS:{}:{}", id, user_alias))
@@ -50,8 +47,6 @@ pub async fn handle_connection(
         {
             println!("Error sending user update: {:?}", e);
         }
-
-        let client_total = conn_map.len();
     }
 
     let user_id = user.id;
@@ -62,11 +57,9 @@ pub async fn handle_connection(
                 let mut conn_map = state.connection_list.lock().await;
                 conn_map.remove(&id);
 
-                // Remover do user_names
                 let mut user_names = state.user_names.lock().await;
                 user_names.remove(&id);
 
-                // Enviar mensagem de remoção
                 if let Err(e) = state.message_tx.send(format!("REMOVE_USER:{}", id)).await {
                     println!("Error sending user removal: {:?}", e);
                 }

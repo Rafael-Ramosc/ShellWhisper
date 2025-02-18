@@ -2,7 +2,6 @@ pub mod ui_control;
 pub mod ui_screen;
 pub mod ui_state;
 
-use crate::handles::message::Message;
 use crate::server_state::State;
 use ratatui::{
     backend::Backend,
