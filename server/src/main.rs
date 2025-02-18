@@ -21,15 +21,15 @@ use tokio::{net::TcpListener, sync::mpsc};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let server_adress = "127.0.0.1:8080".to_string(); //TODO:> receber isso aqui no entry da applicação
+    let server_adress = "127.0.0.1:8080".to_string();
     println!("Server adress: {}", &server_adress);
     let listener = TcpListener::bind(server_adress).await?;
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let server_limit_connections: u32 = 30;
 
-    let server_limit_connections: u32 = 30; //TODO:> receber isso aqui no entry da applicação
-
-    let (tx, rx) = mpsc::channel(100);
+    // Aumentei o buffer do canal para lidar com mais mensagens
+    let (tx, rx) = mpsc::channel(1000);
     let state = Arc::new(
         State::new(server_limit_connections, &database_url, tx)
             .await
@@ -49,8 +49,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         loop {
             match listener.accept().await {
                 Ok((socket, addr)) => {
-                    //println!("{} is connecting...", addr); TODO: Vai pro log
-
                     let state = server_state.clone();
 
                     tokio::spawn(async move {

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub enum CurrentScreen {
     Main,
     Chatting,
@@ -9,6 +11,7 @@ pub struct UiState {
     pub user_name: String,
     pub chat_messages: Vec<String>,
     pub title: String,
+    pub users: HashMap<u32, String>,
 }
 
 impl UiState {
@@ -18,6 +21,7 @@ impl UiState {
             user_name: String::new(),
             chat_messages: Vec::new(),
             title: String::from("ShellWhisper"),
+            users: HashMap::new(),
         }
     }
 

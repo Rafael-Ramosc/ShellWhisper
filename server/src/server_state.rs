@@ -4,6 +4,7 @@ use tokio::sync::{mpsc, Mutex};
 
 pub struct State {
     pub connection_list: Arc<Mutex<HashMap<u32, SocketAddr>>>,
+    pub user_names: Arc<Mutex<HashMap<u32, String>>>,
     pub id_counter: Arc<Mutex<u32>>,
     max_connections: u32,
     pub db_pool: PgPool,
@@ -20,6 +21,7 @@ impl State {
 
         Ok(State {
             connection_list: Arc::new(Mutex::new(HashMap::new())),
+            user_names: Arc::new(Mutex::new(HashMap::new())),
             id_counter: Arc::new(Mutex::new(0)),
             max_connections: server_limit_connection,
             db_pool: pool,
@@ -42,5 +44,10 @@ impl State {
     pub async fn test_connection(&self) -> Result<(), sqlx::Error> {
         sqlx::query("SELECT 1").execute(&self.db_pool).await?;
         Ok(())
+    }
+
+    pub async fn get_user_list(&self) -> Vec<String> {
+        let user_names = self.user_names.lock().await;
+        user_names.values().cloned().collect()
     }
 }

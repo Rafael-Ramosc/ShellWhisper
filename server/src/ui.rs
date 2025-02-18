@@ -32,14 +32,27 @@ pub async fn run_app<B: Backend>(
         select! {
             event = tokio::spawn(async move { event::read() }) => {
                 if let Ok(Ok(Event::Key(key))) = event {
-                    ui_control(&mut ui_state, Event::Key(key));
+                    ui_control(&mut ui_state, Event::Key(key), None);
                     if matches!(ui_state.current_screen, CurrentScreen::Exiting) {
                         break;
                     }
                 }
             }
-            Some(formatted_message) = message_rx.recv() => {
-                ui_state.add_message(formatted_message);
+            Some(message) = message_rx.recv() => {
+                if message.starts_with("UPDATE_USERS:") {
+                    let parts: Vec<&str> = message.strip_prefix("UPDATE_USERS:").unwrap().split(':').collect();
+                    if parts.len() == 2 {
+                        if let Ok(id) = parts[0].parse::<u32>() {
+                            ui_state.users.insert(id, parts[1].to_string());
+                        }
+                    }
+                } else if message.starts_with("REMOVE_USER:") {
+                    if let Ok(id) = message.strip_prefix("REMOVE_USER:").unwrap().parse::<u32>() {
+                        ui_state.users.remove(&id);
+                    }
+                } else {
+                    ui_state.add_message(message);
+                }
             }
         }
     }

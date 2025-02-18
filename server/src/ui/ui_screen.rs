@@ -50,7 +50,7 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
 
     let left_panel = Paragraph::new(Text::styled(
         ui_state.chat_messages.join("\n"),
-        Style::default().fg(Color::Yellow),
+        Style::default().fg(Color::Gray),
     ))
     .block(
         Block::default()
@@ -60,8 +60,13 @@ pub fn render_screen(f: &mut Frame, ui_state: &UiState) {
     );
 
     let top_right = Paragraph::new(Text::styled(
-        "USER LIST",
-        Style::default().fg(Color::Yellow),
+        ui_state
+            .users
+            .iter()
+            .map(|(id, name)| format!("ID: {} -> {}", id, name))
+            .collect::<Vec<String>>()
+            .join("\n"),
+        Style::default().fg(Color::Green),
     ))
     .block(
         Block::default()

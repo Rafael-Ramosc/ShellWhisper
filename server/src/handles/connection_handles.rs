@@ -32,16 +32,26 @@ pub async fn handle_connection(
     let user_alias = user.alias.clone();
 
     if let Ok(addr) = socket.peer_addr() {
-        //println!("{} connection succeed", &user_alias); TODO: Vai pro log
-
         // Store the created user
         Some(user_connection_db(&state.db_pool, &addr, &user_alias).await);
 
         let mut conn_map = state.connection_list.lock().await;
         conn_map.insert(id, addr);
-        let client_total = conn_map.len();
 
-        // println!("Active connections ({client_total}): {:?}", *conn_map); TODO: Vai pro lista de users
+        // Adicionar usuário ao user_names
+        let mut user_names = state.user_names.lock().await;
+        user_names.insert(id, user_alias.clone());
+
+        // Enviar mensagem de atualização
+        if let Err(e) = state
+            .message_tx
+            .send(format!("UPDATE_USERS:{}:{}", id, user_alias))
+            .await
+        {
+            println!("Error sending user update: {:?}", e);
+        }
+
+        let client_total = conn_map.len();
     }
 
     let user_id = user.id;
@@ -51,6 +61,15 @@ pub async fn handle_connection(
             Ok(0) => {
                 let mut conn_map = state.connection_list.lock().await;
                 conn_map.remove(&id);
+
+                // Remover do user_names
+                let mut user_names = state.user_names.lock().await;
+                user_names.remove(&id);
+
+                // Enviar mensagem de remoção
+                if let Err(e) = state.message_tx.send(format!("REMOVE_USER:{}", id)).await {
+                    println!("Error sending user removal: {:?}", e);
+                }
                 break;
             }
             Ok(n) => {
